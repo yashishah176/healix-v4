@@ -8,6 +8,7 @@ async function register(page: Page, phone: string) {
   await page.getByRole("radio", { name: "English" }).click();
   await page.getByRole("button", { name: english.cont }).click();
   await page.getByLabel("Mobile number").fill(phone);
+  await page.getByLabel("Full name").fill("Test Patient");
   await page.getByRole("button", { name: "Send code" }).click();
   await page.getByLabel("6-digit code").fill("424242");
   await page.getByRole("button", { name: "Confirm" }).click();

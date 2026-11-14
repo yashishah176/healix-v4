@@ -6,7 +6,8 @@ import { loadEnv } from "../server/env";
 const env = loadEnv({
   ...process.env,
   DATA_MODE: process.env.VERCEL ? "mock" : process.env.DATA_MODE ?? "mock",
-  AUTH_CODE: process.env.VERCEL ? "123456" : process.env.AUTH_CODE ?? "123456",
+  AUTH_CODE: process.env.VERCEL ? (process.env.AUTH_CODE ?? "424242") : process.env.AUTH_CODE ?? "123456",
+  SHOW_DEMO_CODE: process.env.VERCEL ? "true" : process.env.SHOW_DEMO_CODE,
 });
 const app = createAppHandle(env, { startSimulator: false }).app;
 

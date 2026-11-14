@@ -11,6 +11,7 @@ async function registerThroughTheApp(page: Page, phone: string) {
   await page.getByRole("radio", { name: "English" }).click();
   await page.getByRole("button", { name: english.cont }).click();
   await page.getByLabel("Mobile number").fill(phone);
+  await page.getByLabel("Full name").fill("Test Patient");
   await page.getByRole("button", { name: "Send code" }).click();
   await expect(page.getByText("No text message is sent in this setup.")).toBeVisible();
   await page.getByLabel("6-digit code").fill(code);
@@ -47,6 +48,7 @@ test.describe("local mode, a real backend", () => {
     await page.getByRole("radio", { name: "English" }).click();
     await page.getByRole("button", { name: english.cont }).click();
     await page.getByLabel("Mobile number").fill("9822200001");
+    await page.getByLabel("Full name").fill("Test Patient");
     await page.getByRole("button", { name: "Send code" }).click();
     await expect(page.getByTestId("demo-code")).toContainText("424242");
     await page.goto("/hospital/login");
@@ -60,6 +62,7 @@ test.describe("local mode, a real backend", () => {
     await page.getByRole("radio", { name: "English" }).click();
     await page.getByRole("button", { name: english.cont }).click();
     await page.getByLabel("Mobile number").fill(phone);
+    await page.getByLabel("Full name").fill("Test Patient");
     await page.getByRole("button", { name: "Send code" }).click();
     await page.getByLabel("6-digit code").fill("123456");
     await page.getByRole("button", { name: "Confirm" }).click();
