@@ -2,6 +2,18 @@
 
 Healix is one Node process: it serves the built website and the API from the same address. It needs a host that can run a long-lived Node server. It does **not** fit serverless hosting (for example Vercel functions), because local mode saves data to disk and the demo mode keeps state in memory.
 
+## Vercel (the public demo)
+
+Vercel is supported for the **demo** only. The build turns the API into one self-contained function and writes Vercel's routing itself, so `/api/...` always reaches the API and every other page falls back to the app.
+
+1. Import the GitHub repo in Vercel. Leave Framework Preset as **Vite**. `vercel.json` sets the build command to `npm run build:vercel`. Don't override it in the dashboard.
+2. Environment variables (Settings, Environment Variables), all optional: `GROQ_API_KEY`, `GROQ_MODEL`, `SARVAM_API_KEY`, `SARVAM_STT_MODEL`, `SARVAM_TTS_MODEL`, `AUTH_CODE` (defaults to `424242`), `SHOW_DEMO_CODE` (defaults to `true`).
+3. Deploy. Then open `https://YOUR-SITE.vercel.app/api/meta`: it must show JSON with `"data_mode":"mock"`. If it shows the "This page does not exist" screen instead, the build command was overridden: clear it in the dashboard and redeploy.
+
+On Vercel the data is demo data held in memory: it can reset at any time, and uploads are limited to about 4.5 MB by Vercel. Report reading (OCR) is off there. Use a normal Node host for real reading and saving.
+
+Before pushing changes that touch the server, run `npm run check:vercel`. It builds exactly what Vercel will run and tests the API function on its own (sign-in, multi-part paths, report images, chat streaming).
+
 ## Pick the setup
 
 | Goal | Mode | Keys | Notes |

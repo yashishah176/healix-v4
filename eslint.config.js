@@ -6,7 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 const domGlobals = ["window", "document", "navigator", "localStorage", "sessionStorage", "HTMLElement", "Audio", "MediaRecorder", "indexedDB"];
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "design", "src/web/styles/theme.generated.css", "playwright-report", "test-results"] },
+  { ignores: [".vercel", "dist", "node_modules", "design", "src/web/styles/theme.generated.css", "playwright-report", "test-results"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

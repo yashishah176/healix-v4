@@ -6,3 +6,5 @@ test-results
 *.local
 
 server/data/local
+
+.vercel
