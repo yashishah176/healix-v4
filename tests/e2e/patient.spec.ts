@@ -27,11 +27,14 @@ test.describe("onboarding", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
 
-    await page.getByRole("textbox").fill("12345");
+    await page.getByRole("button", { name: "Send code" }).click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await page.getByLabel("Full name").fill("Asha Rao");
+    await page.getByLabel("Mobile number").fill("12345");
     await page.getByRole("button", { name: "Send code" }).click();
     await expect(page.getByRole("alert")).toHaveText("Enter a 10-digit mobile number.");
     await page.getByRole("button", { name: "Use the demo account" }).click();
-    await expect(page.getByText("Demo mode: the code is 123456.")).toBeVisible();
+    await expect(page.getByText("Demo sign-in code: 123456.")).toBeVisible();
 
     await page.getByRole("textbox").fill("000000");
     await page.getByRole("button", { name: "Confirm" }).click();
@@ -68,14 +71,15 @@ test.describe("onboarding", () => {
   test("an unknown phone number is registered after a correct code", async ({ page }) => {
     await page.goto("/app");
     await page.getByRole("button", { name: "Continue" }).click();
-    await page.getByRole("textbox").fill("9123456789");
+    await page.getByLabel("Mobile number").fill("9123456789");
+    await page.getByLabel("Full name").fill("Asha Rao");
     await page.getByRole("button", { name: "Send code" }).click();
     await page.getByRole("textbox").fill("123456");
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "3");
     await page.getByRole("switch", { name: "Understand my symptoms" }).click();
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("region", { name: "Your details" }).getByLabel("Full name")).toHaveValue("New patient");
+    await expect(page.getByRole("region", { name: "Your details" }).getByLabel("Full name")).toHaveValue("Asha Rao");
   });
 
   test("Devanagari text gets the extra four pixels of line height", async ({ page }) => {
