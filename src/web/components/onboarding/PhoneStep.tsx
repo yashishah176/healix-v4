@@ -12,6 +12,7 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
   const meta = useMeta();
   const [stage, setStage] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,10 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
 
   function sendCode(event: FormEvent) {
     event.preventDefault();
+    if (!name.trim()) {
+      setError(t("profileForm.nameMissing"));
+      return;
+    }
     if (!validPhone.test(phone)) {
       setError(t("onboarding.phone.badPhone"));
       return;
@@ -38,7 +43,7 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
     setBusy(true);
     setError(null);
     try {
-      await signInOrRegister(phone, code);
+      await signInOrRegister(phone, code, name.trim());
       onNext();
     } catch (cause) {
       const { ApiError } = await import("@core/api/error");
@@ -71,6 +76,8 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
               aria-describedby={error ? "phone-error" : undefined}
             />
           </div>
+          <label className="type-label" htmlFor="signup-name">{t("onboarding.phone.nameLabel")}</label>
+          <input id="signup-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80} className={inputClass} />
           {error ? (
             <p id="phone-error" role="alert" className="type-small !text-alert-text">
               {error}
@@ -86,6 +93,7 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
                 className="w-full"
                 onClick={() => {
                   setPhone(demoPatientPhone);
+                  setName("Sunita Patil");
                   setCode(demoCode ?? demoOtp);
                   setError(null);
                   setStage("otp");
@@ -120,9 +128,9 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
           <p data-testid="demo-code" className="type-small rounded-card border border-line bg-stage px-4 py-3">
             {t("onboarding.phone.demoCodeIs")} <span className="font-mono text-[18px] font-medium tracking-[0.25em] text-ink">{demoCode}</span>
           </p>
-        ) : isMock ? (
+        ) : (
           <p className="type-small">{t("onboarding.phone.demoHint")}</p>
-        ) : null}
+        )}
         {error ? (
           <p id="otp-error" role="alert" className="type-small !text-alert-text">
             {error}
