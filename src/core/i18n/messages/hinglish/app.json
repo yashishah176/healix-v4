@@ -20,7 +20,8 @@
       "badPhone": "10 ankon ka mobile number daalein.",
       "badCode": "Yeh code sahi nahi hai. Kripya phir koshish karein.",
       "failed": "Sign in nahi ho paya. Kripya phir koshish karein.",
-      "localCode": "Is app ke liye tay kiya gaya sign-in code daalein. Is setup mein text message nahi bheja jaata."
+      "localCode": "Is app ke liye tay kiya gaya sign-in code daalein. Is setup mein text message nahi bheja jaata.",
+      "demoCodeIs": "Reviewers ke liye demo code:"
     },
     "consent": {
       "title": "Healix kya istemaal kar sakta hai?",

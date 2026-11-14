@@ -141,7 +141,8 @@
       "badCode": "That code is not correct.",
       "notStaff": "This number is not set up for hospital staff.",
       "failed": "We could not sign you in. Please try again.",
-      "back": "Back to the home page"
+      "back": "Back to the home page",
+      "demoHint": "Demo staff sign-in (phone · code):"
     },
     "signOut": "Sign out"
   }

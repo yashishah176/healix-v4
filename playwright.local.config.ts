@@ -26,6 +26,7 @@ export default defineConfig({
       LOCAL_DATA_DIR: "test-results/local-data",
       AUTH_CODE: "424242",
       STAFF_PHONES: "9000000001:karve",
+      SHOW_DEMO_CODE: "true",
       SARVAM_API_KEY: "",
     },
   },

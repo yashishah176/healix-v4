@@ -8,6 +8,12 @@ import { createAppHandle, groqConfigFor } from "./app";
 import { loadEnv } from "./env";
 
 const env = loadEnv();
+
+if (process.env.NODE_ENV === "production" && env.DATA_MODE === "local" && !env.AUTH_CODE) {
+  console.error("Refusing to start: DATA_MODE=local needs AUTH_CODE (6 digits) in server/.env when running in production.");
+  process.exit(1);
+}
+
 const handle = createAppHandle(env, { startSimulator: true });
 const app = handle.app;
 

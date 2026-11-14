@@ -20,7 +20,8 @@
       "badPhone": "Enter a 10-digit mobile number.",
       "badCode": "That code is not correct. Please try again.",
       "failed": "We could not sign you in. Please try again.",
-      "localCode": "Enter the sign-in code set up for this app. No text message is sent in this setup."
+      "localCode": "Enter the sign-in code set up for this app. No text message is sent in this setup.",
+      "demoCodeIs": "Demo code for reviewers:"
     },
     "consent": {
       "title": "What may Healix use?",

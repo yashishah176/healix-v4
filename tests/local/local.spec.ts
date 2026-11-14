@@ -42,6 +42,18 @@ test.describe("local mode, a real backend", () => {
     await expect(page.getByRole("button", { name: "Use the demo account" })).toHaveCount(0);
   });
 
+  test("the sign-in code is shown to reviewers on the code screens when the demo hint is on", async ({ page }) => {
+    await page.goto("/app/welcome");
+    await page.getByRole("radio", { name: "English" }).click();
+    await page.getByRole("button", { name: english.cont }).click();
+    await page.getByLabel("Mobile number").fill("9822200001");
+    await page.getByRole("button", { name: "Send code" }).click();
+    await expect(page.getByTestId("demo-code")).toContainText("424242");
+    await page.goto("/hospital/login");
+    await expect(page.getByTestId("demo-staff-code")).toContainText("9000000001");
+    await expect(page.getByTestId("demo-staff-code")).toContainText("424242");
+  });
+
   test("a new person signs up with the code, and the wrong code is refused", async ({ page }) => {
     const phone = nextPhone();
     await page.goto("/app/welcome");

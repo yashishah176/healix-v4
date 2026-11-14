@@ -4,15 +4,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "@core/api/error";
 import { Button } from "../../components/base/Button";
 import { Card } from "../../components/base/Card";
+import { useMeta } from "@core/hooks/useMeta";
+import { DataProviders } from "../../components/layout/DataProviders";
 import { loginWithPhone } from "../../lib/auth";
 import { sessionStore } from "../../store";
 
 const inputClass =
   "type-body min-h-14 w-full rounded-pill border border-line bg-surface px-6 text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-export default function StaffLogin() {
+function StaffLoginForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const hint = useMeta().data?.demo_hint;
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -49,11 +52,25 @@ export default function StaffLogin() {
           <input id="staff-phone" value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} inputMode="numeric" autoComplete="tel-national" className={inputClass} />
           <label className="type-label" htmlFor="staff-code">{t("hospital.login.code")}</label>
           <input id="staff-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" autoComplete="one-time-code" className={`${inputClass} font-mono tracking-[0.3em]`} />
+          {hint ? (
+            <p data-testid="demo-staff-code" className="type-small rounded-card border border-line bg-stage px-4 py-3">
+              {t("hospital.login.demoHint")}{" "}
+              <span className="font-mono text-[16px] font-medium text-ink">{hint.staff_phone}</span> · <span className="font-mono text-[16px] font-medium tracking-[0.2em] text-ink">{hint.code}</span>
+            </p>
+          ) : null}
           {error ? <p role="alert" className="type-small !text-alert-text">{error}</p> : null}
           <Button type="submit" disabled={busy}>{t("hospital.login.signIn")}</Button>
         </form>
       </Card>
       <Link to="/" className="type-small underline">{t("hospital.login.back")}</Link>
     </main>
+  );
+}
+
+export default function StaffLogin() {
+  return (
+    <DataProviders>
+      <StaffLoginForm />
+    </DataProviders>
   );
 }

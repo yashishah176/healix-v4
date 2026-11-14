@@ -24,4 +24,13 @@ describe("server meta", () => {
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: { code: "not_found", message: "Unknown API route", retry: false } });
   });
+
+  it("shows the sign-in code in meta only when SHOW_DEMO_CODE is switched on", async () => {
+    const hidden = await createApp(loadEnv({ AUTH_CODE: "424242" })).request("/api/meta");
+    expect(await hidden.json()).not.toHaveProperty("demo_hint");
+    const shown = await createApp(loadEnv({ AUTH_CODE: "424242", SHOW_DEMO_CODE: "true", STAFF_PHONES: "9000000002:karve" })).request("/api/meta");
+    expect(((await shown.json()) as { demo_hint: unknown }).demo_hint).toEqual({ code: "424242", staff_phone: "9000000002" });
+    const fallback = await createApp(loadEnv({ SHOW_DEMO_CODE: "1" })).request("/api/meta");
+    expect(((await fallback.json()) as { demo_hint: unknown }).demo_hint).toEqual({ code: "123456", staff_phone: "9000000001" });
+  });
 });

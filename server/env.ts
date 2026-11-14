@@ -19,11 +19,16 @@ const envSchema = z.object({
   LOCAL_DATA_DIR: optionalText,
   AUTH_CODE: optionalText.refine((value) => value === undefined || /^\d{6}$/.test(value), "AUTH_CODE must be exactly 6 digits"),
   STAFF_PHONES: optionalText,
+  SHOW_DEMO_CODE: z
+    .string()
+    .optional()
+    .transform((value) => value !== undefined && /^(1|true|yes|on)$/i.test(value.trim())),
   BACKEND_URL: z.string().url().default("http://localhost:8000"),
   AI_URL: z.string().url().default("http://localhost:8001"),
   GROQ_API_KEY: optionalText,
   GROQ_BASE_URL: z.string().url().default("https://api.groq.com/openai/v1"),
   GROQ_MODEL: optionalText,
+  GROQ_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(60),
   GROQ_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   SARVAM_API_KEY: optionalText,
   SARVAM_BASE_URL: z.string().url().default("https://api.sarvam.ai"),

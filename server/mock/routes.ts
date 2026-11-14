@@ -27,6 +27,8 @@ import {
 import { communityTopicSchema, createCommentRequestSchema, createPostRequestSchema, voteRequestSchema } from "@core/api/schemas/community";
 import { isLanguageCode, type LanguageCode } from "@core/i18n/languages";
 import { kindOf, normaliseMime } from "../live/documents";
+import { clientKey, createLimiters, type Limiters } from "../guards";
+import type { RateLimiter } from "../sarvam/rateLimit";
 import type { GroqConfig, GroqTransport } from "../rag/groq";
 import { ragAnswer } from "../rag/assistant";
 import { VectorStore } from "../rag/store";
@@ -66,6 +68,7 @@ export interface MockApiOptions {
   latency: MockLatency;
   onReset?: () => void;
   rag?: RagSetup;
+  limiters?: Limiters;
 }
 
 export interface RagSetup {
@@ -74,7 +77,7 @@ export interface RagSetup {
   transport?: GroqTransport;
 }
 
-export function createMockApi({ world, simulator, latency, onReset, rag, otp = "123456" }: MockApiOptions): Hono {
+export function createMockApi({ world, simulator, latency, onReset, rag, limiters = createLimiters(60), otp = "123456" }: MockApiOptions): Hono {
   const api = new Hono();
   const knowledge: RagSetup = rag ?? { store: new VectorStore() };
   let requestCounter = 0;
@@ -110,8 +113,14 @@ export function createMockApi({ world, simulator, latency, onReset, rag, otp = "
     return context.json({ error: { code: "internal_error", message: "Something went wrong", retry: true } }, 500);
   });
 
+  const throttle = (limiter: RateLimiter, key: string, message = "Too many tries. Please wait a little and try again.") => {
+    const verdict = limiter.check(key);
+    if (!verdict.allowed) throw new MockError(429, "slow_down", message, true);
+  };
+
   api.post("/auth/login", async (context) => {
     const request = await body(context, authRequestSchema);
+    if (!world.demo) throttle(limiters.loginAttempts, `login|${request.phone}`);
     if (request.otp !== otp) throw new MockError(401, "invalid_otp", "That code is not correct", false);
     const user = world.findUserByPhone(request.phone);
     if (!user) throw new MockError(404, "user_not_found", "No account for this number yet", false);
@@ -120,6 +129,7 @@ export function createMockApi({ world, simulator, latency, onReset, rag, otp = "
 
   api.post("/auth/register", async (context) => {
     const request = await body(context, authRequestSchema);
+    if (!world.demo) throttle(limiters.registrations, `register|${clientKey(context)}`);
     if (!world.demo && request.otp !== otp) throw new MockError(401, "invalid_otp", "That code is not correct", false);
     if (world.findUserByPhone(request.phone)) throw new MockError(409, "phone_exists", "This number already has an account", false);
     const user = world.registerPatient(request.phone, request.name);
@@ -414,6 +424,7 @@ export function createMockApi({ world, simulator, latency, onReset, rag, otp = "
 
   api.post("/reports", async (context) => {
     const user = requireUser(context);
+    throttle(limiters.upload, `upload|${user.id}`, "You are uploading very quickly. Please wait a minute.");
     if ((context.req.header("content-type") ?? "").includes("multipart/form-data")) {
       const form = await context.req.parseBody();
       const profileId = typeof form.profile_id === "string" ? form.profile_id : "";
@@ -508,6 +519,8 @@ export function createMockApi({ world, simulator, latency, onReset, rag, otp = "
 
   api.post("/ai/assistant/chat", async (context) => {
     const user = requireUser(context);
+    throttle(limiters.chat, `chat|${user.id}`, "You are asking very quickly. Please wait a moment.");
+    const groqAllowed = limiters.groq.check("all").allowed;
     const request = await body(context, assistantChatRequestSchema);
     const fast = isFast(context);
     const ownIds = user.profiles.map((profile) => profile.id);
@@ -522,7 +535,7 @@ export function createMockApi({ world, simulator, latency, onReset, rag, otp = "
           requestId: requestId("req"),
           wordDelayMs: latency.enabled && !fast ? latency.assistantWordMs : 0,
           sleep,
-          groq: knowledge.groq,
+          groq: groqAllowed ? knowledge.groq : undefined,
           transport: knowledge.transport,
           onGroqProblem: (reason) => {
             if (process.env.NODE_ENV !== "test") console.warn(`Healix AI: Groq was not used for this answer (${reason}). The built-in reader answered instead.`);

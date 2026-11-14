@@ -112,10 +112,10 @@ export const explainResponseSchema = z.object({
 });
 
 export const assistantChatRequestSchema = z.object({
-  message: z.string().min(1),
-  language: z.string().optional(),
-  history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
-  profile_id: z.string().optional(),
+  message: z.string().min(1).max(2000),
+  language: z.string().max(20).optional(),
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(4000) })).max(20).optional(),
+  profile_id: z.string().max(80).optional(),
 });
 
 export const citationSchema = z.object({

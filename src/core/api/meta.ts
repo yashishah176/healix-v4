@@ -6,6 +6,7 @@ export const metaSchema = z.object({
   sarvam_enabled: z.boolean(),
   sarvam_mode: z.enum(["live", "mock", "off"]).optional(),
   assistant_mode: z.enum(["groq", "local"]).optional(),
+  demo_hint: z.object({ code: z.string(), staff_phone: z.string() }).optional(),
 });
 
 export type Meta = z.infer<typeof metaSchema>;

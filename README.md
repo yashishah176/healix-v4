@@ -234,6 +234,10 @@ Set `DATA_MODE=local` in `server/.env` and run `npm run dev` (or `npm run build`
 - **Doctors and hospitals** are still the six synthetic Pune hospitals in `server/mock/data`. Swap in your own list there.
 - The built-in tests for this mode run with `npm test` (server project) and `npm run test:local` (a real browser against a fresh local server on port 8788).
 
+## Showing the sign-in code to reviewers
+
+For a public demo site, set `SHOW_DEMO_CODE=true` in `server/.env` (and `AUTH_CODE=424242` if you want that code). The patient code screen and the hospital sign-in page then show the code, and the staff phone, right under the boxes. It is off by default. Anyone who knows a phone number could sign in as it while the code is public, so use it only with demo or throwaway data, and never upload real reports on that site.
+
 ## Troubleshooting keys (Groq and Sarvam)
 
 1. Open `server/.env` and check the key lines are filled in, with no quotes and no spaces around `=`. A fresh copy of `.env.example` has empty keys, so copy your old `.env` over it or paste the keys again.

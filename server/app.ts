@@ -10,6 +10,7 @@ import { Simulator } from "./mock/simulator";
 import { MockWorld, type StaffAccount } from "./mock/world";
 import { createProxy } from "./proxy";
 import { createSaver, ensureSecret, loadSnapshot, type Saver } from "./live/persist";
+import { requestSizeGuard, securityHeaders, createLimiters } from "./guards";
 import { createReportReader } from "./live/reader";
 import type { GroqConfig, GroqTransport } from "./rag/groq";
 import { VectorStore } from "./rag/store";
@@ -24,6 +25,7 @@ export interface MetaPayload {
   sarvam_enabled: boolean;
   sarvam_mode: SarvamMode;
   assistant_mode: "groq" | "local";
+  demo_hint?: { code: string; staff_phone: string };
 }
 
 export function groqConfigFor(env: ServerEnv): GroqConfig | undefined {
@@ -37,6 +39,9 @@ export function buildMeta(env: ServerEnv): MetaPayload {
     sarvam_enabled: Boolean(env.SARVAM_API_KEY),
     sarvam_mode: sarvamModeFor(env),
     assistant_mode: groqConfigFor(env) ? "groq" : "local",
+    ...(env.SHOW_DEMO_CODE
+      ? { demo_hint: { code: env.AUTH_CODE ?? "123456", staff_phone: parseStaffPhones(env.STAFF_PHONES)?.[0]?.phone ?? "9000000001" } }
+      : {}),
   };
 }
 
@@ -96,6 +101,8 @@ export function createAppHandle(env: ServerEnv, options: AppOptions = {}): AppHa
   const saver = local?.saver ?? null;
 
   if (process.env.NODE_ENV !== "test") app.use("*", logger());
+  app.use("/api/*", requestSizeGuard());
+  if (process.env.NODE_ENV === "production") app.use("*", securityHeaders());
 
   const api = new Hono();
   api.get("/health", (context) => context.json({ ok: true }));
@@ -126,6 +133,7 @@ export function createAppHandle(env: ServerEnv, options: AppOptions = {}): AppHa
         world,
         simulator,
         otp: authCode,
+        limiters: createLimiters(env.GROQ_RATE_LIMIT_PER_MINUTE),
         onReset: () => sarvam.resetDemo(),
         rag: {
           store: new VectorStore(local ? resolve(local.dataDirectory, "vectors.json") : undefined),

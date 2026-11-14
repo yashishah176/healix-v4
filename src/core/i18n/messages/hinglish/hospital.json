@@ -141,7 +141,8 @@
       "badCode": "Yeh code sahi nahi hai.",
       "notStaff": "Yeh number hospital staff ke liye set nahi hai.",
       "failed": "Sign in nahi ho paya. Kripya phir koshish karein.",
-      "back": "Home page par wapas"
+      "back": "Home page par wapas",
+      "demoHint": "Demo staff sign-in (phone · code):"
     },
     "signOut": "Sign out"
   }

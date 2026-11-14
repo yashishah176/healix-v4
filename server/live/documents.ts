@@ -87,7 +87,7 @@ export function readZipEntry(zip: Buffer, wanted: string): Buffer | null {
       const localExtra = zip.readUInt16LE(localOffset + 28);
       const start = localOffset + 30 + localName + localExtra;
       const data = zip.subarray(start, start + compressedSize);
-      return method === 0 ? Buffer.from(data) : inflateRawSync(data);
+      return method === 0 ? Buffer.from(data) : inflateRawSync(data, { maxOutputLength: 25 * 1024 * 1024 });
     }
     offset += 46 + nameLength + extraLength + commentLength;
   }

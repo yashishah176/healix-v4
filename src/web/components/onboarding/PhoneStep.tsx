@@ -17,6 +17,7 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
   const [busy, setBusy] = useState(false);
   const isMock = meta.data?.data_mode === "mock";
   const isLocal = meta.data?.data_mode === "local";
+  const demoCode = meta.data?.demo_hint?.code;
 
   function sendCode(event: FormEvent) {
     event.preventDefault();
@@ -85,7 +86,7 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
                 className="w-full"
                 onClick={() => {
                   setPhone(demoPatientPhone);
-                  setCode(demoOtp);
+                  setCode(demoCode ?? demoOtp);
                   setError(null);
                   setStage("otp");
                 }}
@@ -115,7 +116,13 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
           aria-invalid={error !== null}
           aria-describedby={error ? "otp-error" : undefined}
         />
-        {isMock ? <p className="type-small">{t("onboarding.phone.demoHint")}</p> : null}
+        {demoCode ? (
+          <p data-testid="demo-code" className="type-small rounded-card border border-line bg-stage px-4 py-3">
+            {t("onboarding.phone.demoCodeIs")} <span className="font-mono text-[18px] font-medium tracking-[0.25em] text-ink">{demoCode}</span>
+          </p>
+        ) : isMock ? (
+          <p className="type-small">{t("onboarding.phone.demoHint")}</p>
+        ) : null}
         {error ? (
           <p id="otp-error" role="alert" className="type-small !text-alert-text">
             {error}
