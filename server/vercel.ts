@@ -50,8 +50,9 @@ export function restoreApiPath(request: Request): Request {
 }
 
 function changesState(request: Request): boolean {
-  if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") return false;
   const path = new URL(request.url).pathname;
+  if (request.method === "GET" && path.startsWith("/api/ai/jobs/")) return true;
+  if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") return false;
   return !path.startsWith("/api/ai/assistant/") && !path.startsWith("/api/sarvam/");
 }
 

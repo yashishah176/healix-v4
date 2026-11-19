@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { extensionFor } from "../live/documents";
 import { glossaryAnalytes } from "./glossary";
 import type { ReportDocument } from "../rag/store";
@@ -358,7 +359,7 @@ export class ReportStore {
     this.reports.clear();
     this.jobs.clear();
     for (const record of snapshot.reports) {
-      if (record.status === "processing") record.status = "uploaded";
+      if (record.status === "processing" && record.file) record.status = "uploaded";
       this.reports.set(record.id, record);
     }
     for (const job of snapshot.jobs) this.jobs.set(job.id, job);
@@ -489,7 +490,7 @@ export class ReportStore {
   upload(profileId: string): string {
     const key = uploadCycle[this.uploadCount % uploadCycle.length] as FixtureKey;
     this.uploadCount += 1;
-    const id = `rep_new_${String(this.uploadCount).padStart(3, "0")}`;
+    const id = `rep_new_${String(this.uploadCount).padStart(3, "0")}_${randomUUID().slice(0, 6)}`;
     this.reports.set(id, {
       id,
       profileId,
@@ -508,7 +509,7 @@ export class ReportStore {
     if (!record) return undefined;
     record.status = "processing";
     record.failureReason = undefined;
-    const id = `job_${String(this.jobs.size + 1).padStart(3, "0")}`;
+    const id = `job_${String(this.jobs.size + 1).padStart(3, "0")}_${randomUUID().slice(0, 6)}`;
     if (record.file) {
       const job: JobRecord = { id, reportId, startedAtMs: Date.now(), durationMs: 0, state: "processing" };
       this.jobs.set(id, job);

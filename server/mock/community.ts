@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { CommunityComment, CommunityPost, CommunityPostSummary, CommunityTopicId } from "@core/api/schemas/community";
 import { communityTopicIds } from "@core/api/schemas/community";
 import { aliasFor, findContentProblem } from "@core/domain/communityRules";
@@ -326,7 +327,7 @@ export class CommunityStore {
     if (this.recent(user.id, "post") >= maxPostsPerHour) throw new MockError(429, "slow_down", "Please wait a little before posting again", true);
     this.postCounter += 1;
     const post: StoredPost = {
-      id: `post_${String(this.postCounter).padStart(4, "0")}`,
+      id: `post_${String(this.postCounter).padStart(4, "0")}_${randomUUID().slice(0, 6)}`,
       topicId: request.topic_id,
       authorId: user.id,
       authorAlias: aliasFor(user.id),
@@ -349,7 +350,7 @@ export class CommunityStore {
     if (this.recent(user.id, "comment") >= maxCommentsPerHour) throw new MockError(429, "slow_down", "Please wait a little before replying again", true);
     this.commentCounter += 1;
     post.comments.push({
-      id: `comment_${String(this.commentCounter).padStart(4, "0")}`,
+      id: `comment_${String(this.commentCounter).padStart(4, "0")}_${randomUUID().slice(0, 6)}`,
       authorId: user.id,
       authorAlias: aliasFor(user.id),
       body: body.trim(),

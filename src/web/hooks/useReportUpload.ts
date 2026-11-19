@@ -30,7 +30,10 @@ export function useReportUpload(profileId: string | undefined) {
       setReason(null);
       setPhase("reading");
       try {
-        const created = await reports.upload(profileId, file);
+        const { fetchMeta } = await import("@core/api/meta");
+        const mode = await fetchMeta().then((meta) => meta.data_mode).catch(() => null);
+        const sent = mode === "mock" ? new File(["demo"], file.name, { type: file.type }) : file;
+        const created = await reports.upload(profileId, sent);
         const job = await ai.processReport(created.report_id);
         for (let attempt = 0; attempt < maxPolls; attempt += 1) {
           await new Promise((resolve) => setTimeout(resolve, jobPollMs));

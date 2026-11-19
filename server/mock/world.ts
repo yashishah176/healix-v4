@@ -514,7 +514,7 @@ export class MockWorld {
 
     this.bookingCounter += 1;
     const booking: BookingRecord = {
-      booking_id: `bk_${String(this.bookingCounter).padStart(4, "0")}`,
+      booking_id: `bk_${String(this.bookingCounter).padStart(4, "0")}_${randomUUID().slice(0, 6)}`,
       doctor_id: request.doctor_id,
       profile_id: request.profile_id,
       slot_start: request.slot_start,
@@ -772,7 +772,7 @@ export class MockWorld {
     mine.swapRequestsUsed += 1;
     this.swapCounter += 1;
     const now = Date.now();
-    const id = `swap_${String(this.swapCounter).padStart(4, "0")}`;
+    const id = `swap_${String(this.swapCounter).padStart(4, "0")}_${randomUUID().slice(0, 6)}`;
     const record: SwapRecord = {
       id,
       fromTokenId: mine.id,
@@ -862,7 +862,7 @@ export class MockWorld {
     this.alertCounter += 1;
     const eta = nearest.eta_minutes;
     const record: PreAlertRecord = {
-      id: `alert_${String(this.alertCounter).padStart(3, "0")}`,
+      id: `alert_${String(this.alertCounter).padStart(3, "0")}_${randomUUID().slice(0, 6)}`,
       hospitalId: hospital.entry.id,
       patientLabel: profile ? `${profile.name}` : "Patient",
       age: profile?.age ?? 0,
