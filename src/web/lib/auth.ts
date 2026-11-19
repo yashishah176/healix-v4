@@ -56,6 +56,7 @@ export async function signInOrRegister(phone: string, otp: string, name: string)
     }
   } catch (cause) {
     if (!(cause instanceof ApiError) || cause.code !== "user_not_found") throw cause;
+    if (!name) throw new Error("name_needed", { cause });
     const auth = await backend.register(phone, name, otp);
     sessionStore.getState().startSession(auth);
   }

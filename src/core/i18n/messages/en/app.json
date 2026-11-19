@@ -9,7 +9,7 @@
       "title": "Your phone number",
       "body": "We will send a code to confirm it is you.",
       "label": "Mobile number",
-      "nameLabel": "Full name",
+      "nameLabel": "Full name (only needed the first time)",
       "send": "Send code",
       "demoAccount": "Use the demo account",
       "otpTitle": "Enter the code",
@@ -22,7 +22,8 @@
       "badCode": "That code is not correct. Please try again.",
       "failed": "We could not sign you in. Please try again.",
       "localCode": "Enter the sign-in code set up for this app. No text message is sent in this setup.",
-      "demoCodeIs": "Demo code for reviewers:"
+      "demoCodeIs": "Demo code for reviewers:",
+      "nameNeeded": "This number is new. Please add your name, then continue."
     },
     "consent": {
       "title": "What may Healix use?",

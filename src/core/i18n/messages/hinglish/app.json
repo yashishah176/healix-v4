@@ -22,7 +22,8 @@
       "failed": "Sign in nahi ho paya. Kripya phir koshish karein.",
       "localCode": "Is app ke liye tay kiya gaya sign-in code daalein. Is setup mein text message nahi bheja jaata.",
       "demoCodeIs": "Reviewers ke liye demo code:",
-      "nameLabel": "Full name"
+      "nameLabel": "Poora naam (sirf pehli baar zaroori)",
+      "nameNeeded": "Yeh number naya hai. Kripya apna naam likhein, phir aage badhein."
     },
     "consent": {
       "title": "Healix kya istemaal kar sakta hai?",

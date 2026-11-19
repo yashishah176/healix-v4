@@ -56,6 +56,37 @@ test.describe("local mode, a real backend", () => {
     await expect(page.getByTestId("demo-staff-code")).toContainText("424242");
   });
 
+  test("signing in again with the same number returns to the same account without retyping the name", async ({ page, context }) => {
+    const phone = nextPhone();
+    await registerThroughTheApp(page, phone);
+    const greeting = await page.getByRole("heading", { level: 1 }).textContent();
+    await context.clearCookies();
+    await page.evaluate(() => sessionStorage.clear());
+    await page.goto("/app/welcome");
+    await page.getByRole("radio", { name: "English" }).click();
+    await page.getByRole("button", { name: english.cont }).click();
+    await page.getByLabel("Mobile number").fill(phone);
+    await page.getByRole("button", { name: "Send code" }).click();
+    await page.getByLabel("6-digit code").fill(code);
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByRole("switch").first()).toBeVisible();
+    for (const label of english.consents) await expect(page.getByRole("switch", { name: label })).toHaveAttribute("aria-checked", "true");
+    await page.getByRole("button", { name: english.cont }).click();
+    await page.getByRole("button", { name: english.finish }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(greeting ?? "");
+
+    await page.evaluate(() => sessionStorage.clear());
+    await page.goto("/app/welcome");
+    await page.getByRole("radio", { name: "English" }).click();
+    await page.getByRole("button", { name: english.cont }).click();
+    await page.getByLabel("Mobile number").fill(nextPhone());
+    await page.getByRole("button", { name: "Send code" }).click();
+    await page.getByLabel("6-digit code").fill(code);
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByRole("alert")).toHaveText("This number is new. Please add your name, then continue.");
+    await expect(page.getByLabel("Full name")).toBeVisible();
+  });
+
   test("a new person signs up with the code, and the wrong code is refused", async ({ page }) => {
     const phone = nextPhone();
     await page.goto("/app/welcome");

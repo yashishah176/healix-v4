@@ -23,7 +23,7 @@ export function ForHospitals({ queue }: { queue: DemoQueueState }) {
       const meta = await fetchMeta();
       if (meta.data_mode === "mock") {
         const { demoOtp, demoStaffPhone, loginWithPhone } = await import("../../lib/auth");
-        await loginWithPhone(demoStaffPhone, demoOtp);
+        await loginWithPhone(meta.demo_hint?.staff_phone ?? demoStaffPhone, meta.demo_hint?.code ?? demoOtp);
       }
     } catch {
       navigate("/hospital");

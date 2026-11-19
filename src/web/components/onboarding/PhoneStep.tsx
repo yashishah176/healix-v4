@@ -22,10 +22,6 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
 
   function sendCode(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim()) {
-      setError(t("profileForm.nameMissing"));
-      return;
-    }
     if (!validPhone.test(phone)) {
       setError(t("onboarding.phone.badPhone"));
       return;
@@ -47,6 +43,11 @@ export function PhoneStep({ total, onBack, onNext }: { total: number; onBack: ()
       onNext();
     } catch (cause) {
       const { ApiError } = await import("@core/api/error");
+      if (cause instanceof Error && cause.message === "name_needed") {
+        setStage("phone");
+        setError(t("onboarding.phone.nameNeeded"));
+        return;
+      }
       setError(cause instanceof ApiError && cause.code === "invalid_otp" ? t("onboarding.phone.badCode") : t("onboarding.phone.failed"));
     } finally {
       setBusy(false);

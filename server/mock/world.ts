@@ -12,7 +12,7 @@ import type {
 } from "@core/api/schemas/backend";
 import type { z } from "zod";
 import type { bookingSchema, consentSchema, slotsResponseSchema } from "@core/api/schemas/backend";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { createMockClock, type MockClock, type MockClockOptions } from "./clock";
 import doctorsData from "./data/doctors.json";
 import historyData from "./data/history.json";
@@ -279,7 +279,7 @@ export class MockWorld {
 
   registerPatient(phone: string, name: string | undefined): User {
     this.extraPatientCounter += 1;
-    const id = `pat_new_${this.extraPatientCounter}`;
+    const id = `pat_${createHash("sha256").update(`healix-patient|${phone}`).digest("hex").slice(0, 16)}`;
     const profile: Profile = {
       id: `prof_${id}`,
       name: name ?? "New patient",
@@ -348,7 +348,7 @@ export class MockWorld {
   addProfile(user: User, profile: Omit<Profile, "id">): Profile {
     const patient = this.patients.get(user.id);
     if (!patient) throw new MockError(403, "forbidden", "Only patients have profiles");
-    const created: Profile = { ...profile, id: `prof_${patient.id}_${patient.profiles.length + 1}` };
+    const created: Profile = { ...profile, id: `prof_${patient.id}_${randomUUID().slice(0, 8)}` };
     patient.profiles.push(created);
     this.profileOwners.set(created.id, patient.id);
     return created;

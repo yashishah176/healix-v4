@@ -109,7 +109,8 @@ function fromReport(hits: readonly SearchHit[], language: LanguageCode, question
   const candidates = hits
     .flatMap((hit, hitIndex) => hit.chunk.text.split("\n").map((line, lineIndex) => ({ line, position: hitIndex * 1000 + lineIndex })))
     .map(({ line, position }) => ({ line: line.trim(), position, hits: tokenize(line).filter((token) => asked.has(token)).length + (/:\s*\d/.test(line) ? 2 : 0) }))
-    .filter((entry) => entry.line.length > 0 && !entry.line.endsWith(":"));
+    .filter((entry) => entry.line.length > 0 && !entry.line.endsWith(":") && !/^[a-z]/.test(entry.line))
+    .filter((entry, index, all) => all.findIndex((other) => other.line === entry.line) === index);
   const chosen = candidates
     .sort((a, b) => b.hits - a.hits || a.position - b.position)
     .slice(0, 2)
