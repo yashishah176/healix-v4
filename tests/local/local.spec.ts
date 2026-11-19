@@ -59,6 +59,7 @@ test.describe("local mode, a real backend", () => {
   test("signing in again with the same number returns to the same account without retyping the name", async ({ page, context }) => {
     const phone = nextPhone();
     await registerThroughTheApp(page, phone);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Namaste, /);
     const greeting = await page.getByRole("heading", { level: 1 }).textContent();
     await context.clearCookies();
     await page.evaluate(() => sessionStorage.clear());
