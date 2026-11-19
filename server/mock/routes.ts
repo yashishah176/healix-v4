@@ -34,7 +34,7 @@ import { ragAnswer } from "../rag/assistant";
 import { VectorStore } from "../rag/store";
 import { dashboardAccuracyFor, dashboardAnalyticsFor, dashboardBookingModes, dashboardDoctors, dashboardOverview } from "./dashboard";
 import { MockError } from "./errors";
-import { bestTimes, matchDoctors } from "./match";
+import { bestTimes, matchDoctorsWithFallback } from "./match";
 import { answerTriage, runTriage } from "./triage";
 import type { Simulator } from "./simulator";
 import type { MockWorld } from "./world";
@@ -219,7 +219,8 @@ export function createMockApi({ world, simulator, latency, onReset, rag, limiter
     requireUser(context);
     const request = await body(context, matchRequestSchema);
     await wait(context, latency.matchMs);
-    return context.json({ items: matchDoctors(world, request), server_time: world.nowIso() });
+    const found = matchDoctorsWithFallback(world, request);
+    return context.json({ items: found.items, widened: found.widened, server_time: world.nowIso() });
   });
 
   api.get("/doctors/:id", (context) => context.json(world.doctorView(world.requireDoctor(context.req.param("id")))));

@@ -206,6 +206,21 @@ describe("the scripted demo: triage, match, booking race, token, swaps", () => {
     expect(matchResponseSchema.parse(near.json).items.every((item) => (item.doctor.distance_km ?? 99) <= 3)).toBe(true);
   });
 
+  it("never comes back empty: far from every hospital, it lists the nearest doctors and says so", async () => {
+    for (const [lat, lng] of [[19.076, 72.8777], [28.6139, 77.209]] as const) {
+      for (const specialty of ["General Physician", "Neurology", "Cardiology"] as const) {
+        const response = await call("POST", "/match", { token: state.token, body: { specialty, urgency: "soon", language: "en", lat, lng } });
+        const parsed = matchResponseSchema.parse(response.json);
+        expect(parsed.items.length, `${specialty} from ${lat},${lng}`).toBeGreaterThan(0);
+        expect(parsed.widened).toBe(true);
+        const distances = parsed.items.map((item) => item.doctor.distance_km ?? 0);
+        expect([...distances].sort((a, b) => a - b)).toEqual(distances);
+      }
+    }
+    const pune = matchResponseSchema.parse((await call("POST", "/match", { token: state.token, body: { specialty: "General Physician", urgency: "soon", language: "en", ...sunita } })).json);
+    expect(pune.widened).toBe(false);
+  });
+
   it("returns three best times with minutes saved", async () => {
     const response = await call("GET", "/doctors/doc_meera/best-times", { token: state.token });
     const times = bestTimesSchema.parse(response.json).times;

@@ -85,6 +85,15 @@ export function matchDoctors(world: MockWorld, request: MatchRequest): MatchItem
   }));
 }
 
+const widenedSearchKm = 100_000;
+
+export function matchDoctorsWithFallback(world: MockWorld, request: MatchRequest): { items: MatchItem[]; widened: boolean } {
+  const nearby = matchDoctors(world, request);
+  if (nearby.length > 0) return { items: nearby, widened: false };
+  const nearest = matchDoctors(world, { ...request, max_km: widenedSearchKm }).sort((a, b) => (a.doctor.distance_km ?? 0) - (b.doctor.distance_km ?? 0));
+  return { items: nearest, widened: nearest.length > 0 };
+}
+
 const clinicHours = { start: 9, end: 17 };
 const baselineConsultMinutes = 8;
 

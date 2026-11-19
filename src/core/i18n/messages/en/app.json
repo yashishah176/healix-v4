@@ -262,7 +262,8 @@
       "submit": "Find doctors",
       "results": "Doctors for your search",
       "summary": "{{date}} · {{window}} · {{purpose}}"
-    }
+    },
+    "widened": "No doctors within your usual distance, so these are the nearest ones (about {{km}} km away)."
   },
   "booking": {
     "title": "Choose a time",

@@ -99,3 +99,18 @@ test.describe("find a doctor", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
   });
 });
+
+test.describe("a patient far from the demo hospitals", () => {
+  test.use({ geolocation: { latitude: 19.076, longitude: 72.8777 }, permissions: ["geolocation", "microphone"] });
+
+  test("a headache still finds doctors, the nearest ones, with a note", async ({ page }) => {
+    await startDemo(page);
+    await page.locator('nav a[href="/app/triage"]').click();
+    await page.getByRole("textbox", { name: "Describe your symptoms" }).fill("I have a headache");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await page.getByRole("button", { name: "No, it built up slowly" }).click();
+    await page.getByRole("link", { name: "Show doctors near me" }).click();
+    await expect(page.getByRole("article").first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("widened-note")).toContainText("nearest");
+  });
+});

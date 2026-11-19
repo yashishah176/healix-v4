@@ -180,6 +180,12 @@ export default function Doctors() {
               </Card>
             ) : null}
 
+            {match.data?.widened && items.length > 0 ? (
+              <p data-testid="widened-note" role="status" className="type-small rounded-card border border-line bg-stage px-4 py-3">
+                {t("doctors.widened", { km: Math.round(items[0]?.doctor.distance_km ?? 0) })}
+              </p>
+            ) : null}
+
             {match.data && items.length === 0 ? (
               <Card className="flex flex-col gap-1">
                 <p className="type-h3">{t("doctors.empty")}</p>

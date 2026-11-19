@@ -117,6 +117,7 @@ export const matchItemSchema = z.object({
 
 export const matchResponseSchema = z.object({
   items: z.array(matchItemSchema).max(5),
+  widened: z.boolean().optional(),
   server_time: isoDateTimeSchema,
 });
 

@@ -238,7 +238,8 @@
       "submit": "Doctors khojein",
       "results": "Aapki khoj ke doctors",
       "summary": "{{date}} · {{window}} · {{purpose}}"
-    }
+    },
+    "widened": "Aapki saamanya doori mein koi doctor nahi mila, isliye yeh sabse paas ke doctor hain (lagbhag {{km}} km door)."
   },
   "booking": {
     "title": "Time chunein",
