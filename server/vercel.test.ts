@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createVercelFetch, type SharedStore } from "./vercel";
+import { demoClockIsStale, endBeforeTimeout, liveStreamMs, createVercelFetch, type SharedStore } from "./vercel";
 
 function memoryStore(): SharedStore {
   let saved: { version: string; text: string } | null = null;
@@ -70,6 +70,54 @@ describe("Vercel: several server copies", () => {
     expect(login.status).toBe(200);
     const meta = (await (await call(copy, "meta")).json()) as { demo_hint?: { code: string } };
     expect(meta.demo_hint?.code).toBe("424242");
+  });
+
+  it("ends the live-updates stream cleanly before Vercel's 30 second limit", async () => {
+    expect(liveStreamMs).toBeLessThan(30_000);
+    const copy = createVercelFetch(env, memoryStore());
+    const response = await call(copy, "events/stream");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    const reader = response.body?.getReader();
+    const first = await reader?.read();
+    expect(new TextDecoder().decode(first?.value)).toContain("ready");
+    await reader?.cancel();
+  });
+
+  it("every copy shows the same demo time, taken from the shared data", async () => {
+    const store = memoryStore();
+    const copyA = createVercelFetch(env, store);
+    expect((await call(copyA, "auth/register", { body: { phone: "9844444444", otp: "424242", name: "Ravi Kale" } })).status).toBe(201);
+    const saved = await store.read(null);
+    if (saved === null || saved === "unchanged") throw new Error("nothing was saved");
+    const shared = JSON.parse(saved.text) as { clock?: { anchorVirtual: number } };
+    expect(shared.clock).toBeDefined();
+    if (shared.clock) shared.clock.anchorVirtual += 30 * 60_000;
+    await store.write(JSON.stringify(shared));
+    const copyB = createVercelFetch(env, store);
+    const timeOn = async (copy: (request: Request) => Promise<Response>) => Date.parse(((await (await call(copy, "queue/doc_meera")).json()) as { server_time: string }).server_time);
+    const [onA, onB, alone] = [await timeOn(copyA), await timeOn(copyB), await timeOn(createVercelFetch(env, null))];
+    expect(Math.abs(onA - onB)).toBeLessThan(5_000);
+    expect(Math.abs(onB - alone - 30 * 60_000)).toBeLessThan(5_000);
+  });
+
+  it("starts the demo day again when the shared clock is from another day or after clinic hours", () => {
+    const realNow = Date.UTC(2026, 10, 22, 6, 0);
+    const todayAt = (hours: number, minutes = 0) => Date.UTC(2026, 10, 21, 18, 30) + (hours * 60 + minutes) * 60_000;
+    expect(demoClockIsStale(todayAt(10, 10), realNow)).toBe(false);
+    expect(demoClockIsStale(todayAt(18, 59), realNow)).toBe(false);
+    expect(demoClockIsStale(todayAt(19, 0), realNow)).toBe(true);
+    expect(demoClockIsStale(todayAt(10, 10) - 24 * 60 * 60_000, realNow)).toBe(true);
+  });
+
+  it("closes a stream that would run forever once the time is up", async () => {
+    let cancelled = false;
+    const endless = new ReadableStream<Uint8Array>({ cancel() { cancelled = true; } });
+    const started = Date.now();
+    const text = await endBeforeTimeout(new Response(endless), 50).text();
+    expect(text).toBe("");
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(cancelled).toBe(true);
   });
 });
 

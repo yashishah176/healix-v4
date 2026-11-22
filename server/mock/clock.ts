@@ -6,6 +6,14 @@ export interface MockClock {
   setSpeed: (factor: number) => void;
   jumpTo: (minutesOfDay: number) => void;
   reset: () => void;
+  state: () => ClockState;
+  setState: (state: ClockState) => void;
+}
+
+export interface ClockState {
+  anchorReal: number;
+  anchorVirtual: number;
+  factor: number;
 }
 
 export interface MockClockOptions {
@@ -16,7 +24,7 @@ export interface MockClockOptions {
 export function createMockClock(options: MockClockOptions = {}): MockClock {
   const startMinutes = options.startMinutesOfDay ?? 10 * 60 + 10;
   const realNow = options.realNowMs ?? (() => Date.now());
-  const midnightMs = istMidnightUtcMs(new Date(realNow()));
+  let midnightMs = istMidnightUtcMs(new Date(realNow()));
 
   let anchorReal = realNow();
   let anchorVirtual = midnightMs + startMinutes * 60_000;
@@ -39,7 +47,14 @@ export function createMockClock(options: MockClockOptions = {}): MockClock {
     jumpTo: (minutesOfDay) => reanchor(midnightMs + minutesOfDay * 60_000),
     reset: () => {
       factor = 1;
+      midnightMs = istMidnightUtcMs(new Date(realNow()));
       reanchor(midnightMs + startMinutes * 60_000);
+    },
+    state: () => ({ anchorReal, anchorVirtual, factor }),
+    setState: (next) => {
+      anchorReal = next.anchorReal;
+      anchorVirtual = next.anchorVirtual;
+      factor = next.factor;
     },
   };
 }

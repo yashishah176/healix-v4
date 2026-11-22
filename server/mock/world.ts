@@ -84,6 +84,14 @@ export interface WorldSnapshot {
   reports: ReportStoreSnapshot;
   community?: CommunitySnapshot;
   triageSessions?: TriageSession[];
+  demoScript?: { raceDone: boolean; rushDone: boolean; incomingPlan: IncomingPlan | null };
+}
+
+interface IncomingPlan {
+  fromTokenId: string;
+  toTokenId: string;
+  dueAtMs: number;
+  created: boolean;
 }
 
 const defaultStaff: StaffAccount[] = [{ phone: "9000000001", hospitalId: "hosp_karve", name: "Front desk, Karve Road" }];
@@ -133,7 +141,7 @@ export class MockWorld {
   private alertCounter = 0;
   private raceDone = false;
   private rushDone = false;
-  private incomingPlan: { fromTokenId: string; toTokenId: string; dueAtMs: number; created: boolean } | null = null;
+  private incomingPlan: IncomingPlan | null = null;
   private readonly profileOwners = new Map<string, string>();
   private extraPatientCounter = 0;
   readonly demo: boolean;
@@ -184,6 +192,7 @@ export class MockWorld {
       reports: this.reports.snapshot(),
       community: this.community.snapshot(),
       triageSessions: [...this.triageSessions.values()].slice(-200),
+      demoScript: { raceDone: this.raceDone, rushDone: this.rushDone, incomingPlan: this.incomingPlan ? { ...this.incomingPlan } : null },
     };
   }
 
@@ -217,6 +226,11 @@ export class MockWorld {
     if (snapshot.community) this.community.restore(snapshot.community);
     this.triageSessions.clear();
     for (const session of snapshot.triageSessions ?? []) this.triageSessions.set(session.id, session);
+    if (snapshot.demoScript) {
+      this.raceDone = snapshot.demoScript.raceDone;
+      this.rushDone = snapshot.demoScript.rushDone;
+      this.incomingPlan = snapshot.demoScript.incomingPlan ? { ...snapshot.demoScript.incomingPlan } : null;
+    }
   }
 
   private indexProfiles(patient: SeedPatient): void {

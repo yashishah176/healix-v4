@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { getRequestListener } from "@hono/node-server";
 import { createAppHandle } from "./app";
 import { loadEnv } from "./env";
+import { istMidnightUtcMs } from "@core/domain/time";
+import type { ClockState } from "./mock/clock";
 import { MockWorld, type WorldSnapshot } from "./mock/world";
 
 export const forwardedPathParam = "__healix_path";
@@ -56,6 +58,50 @@ function changesState(request: Request): boolean {
   return !path.startsWith("/api/ai/assistant/") && !path.startsWith("/api/sarvam/");
 }
 
+export const liveStreamMs = 25_000;
+
+const demoDayEndsMinutes = 19 * 60;
+
+type SharedSnapshot = WorldSnapshot & { clock?: ClockState };
+
+export function demoClockIsStale(virtualNowMs: number, realNowMs: number): boolean {
+  const today = istMidnightUtcMs(new Date(realNowMs));
+  const minutesIntoToday = (virtualNowMs - today) / 60_000;
+  return minutesIntoToday < 0 || minutesIntoToday >= demoDayEndsMinutes;
+}
+
+export function endBeforeTimeout(response: Response, afterMs: number): Response {
+  if (!response.body) return response;
+  const reader = response.body.getReader();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      timer = setTimeout(() => {
+        void reader.cancel().catch(() => undefined);
+        controller.close();
+      }, afterMs);
+    },
+    async pull(controller) {
+      const chunk = await reader.read().catch(() => ({ done: true as const, value: undefined }));
+      if (chunk.done) {
+        clearTimeout(timer);
+        try {
+          controller.close();
+        } catch {
+          return;
+        }
+        return;
+      }
+      controller.enqueue(chunk.value);
+    },
+    cancel() {
+      clearTimeout(timer);
+      void reader.cancel().catch(() => undefined);
+    },
+  });
+  return new Response(body, { status: response.status, headers: response.headers });
+}
+
 export function createVercelFetch(source: Record<string, string | undefined>, store: SharedStore | null) {
   const env = loadEnv({
     ...source,
@@ -72,19 +118,24 @@ export function createVercelFetch(source: Record<string, string | undefined>, st
   async function pull(): Promise<void> {
     if (!store) return;
     const found = await store.read(version);
-    if (found === null || found === "unchanged") return;
-    const snapshot = JSON.parse(found.text) as WorldSnapshot;
-    world.restore(snapshot);
-    version = found.version;
+    if (found !== null && found !== "unchanged") {
+      const snapshot = JSON.parse(found.text) as SharedSnapshot;
+      world.restore(snapshot);
+      if (world.clock.speed() === 1 && snapshot.clock?.factor === 1) world.clock.setState(snapshot.clock);
+      version = found.version;
+    }
+    if (world.clock.speed() === 1 && demoClockIsStale(world.clock.now().getTime(), Date.now())) world.clock.reset();
   }
 
   async function push(): Promise<void> {
     if (!store) return;
-    version = await store.write(JSON.stringify(world.snapshot()));
+    const shared: SharedSnapshot = { ...world.snapshot(), ...(world.clock.speed() === 1 ? { clock: world.clock.state() } : {}) };
+    version = await store.write(JSON.stringify(shared));
   }
 
   return async function handle(incoming: Request): Promise<Response> {
     const request = restoreApiPath(incoming);
+    if (new URL(request.url).pathname === "/api/events/stream") return endBeforeTimeout(await app.fetch(request), liveStreamMs);
     if (!store || !new URL(request.url).pathname.startsWith("/api/")) return app.fetch(request);
     if (!changesState(request)) {
       await pull().catch((error: unknown) => console.warn("Healix: could not read shared data", error instanceof Error ? error.message : error));
