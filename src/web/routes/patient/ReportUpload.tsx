@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { consentPurposes, activeProfile } from "@core/store/session";
 import { Button } from "../../components/base/Button";
 import { Card } from "../../components/base/Card";
+import { useMeta } from "@core/hooks/useMeta";
 import { useReportUpload } from "../../hooks/useReportUpload";
 import { grantConsents } from "../../lib/auth";
 import { sessionStore, useSession } from "../../store";
@@ -20,12 +21,16 @@ function isAccepted(file: File): boolean {
 function failureKey(reason: string | null): string {
   if (reason === "unreadable_file" || reason === "unreadable_image") return "reports.upload.failedUnreadable";
   if (reason === "no_text_found") return "reports.upload.failedNoText";
+  if (reason === "unsupported_type") return "reports.upload.failedUnreadable";
+  if (reason === "file_too_large" || reason === "request_too_large") return "reports.upload.tooBig";
+  if (reason === "network_error") return "reports.upload.failedNetwork";
   if (reason === "scanned_pdf") return "reports.upload.failedScanned";
   return "reports.upload.failed";
 }
 
 export default function ReportUpload() {
   const { t } = useTranslation();
+  const meta = useMeta();
   const profile = useSession((state) => activeProfile(state));
   const consented = useSession((state) => state.consents.reports);
   const upload = useReportUpload(profile?.id);
@@ -46,8 +51,9 @@ export default function ReportUpload() {
 
   function onPick(file: File | undefined) {
     if (!file) return;
-    if (!isAccepted(file)) return setProblem("type");
-    if (file.size > maxBytes) return setProblem("size");
+    const demo = meta.data?.data_mode === "mock";
+    if (!demo && !isAccepted(file)) return setProblem("type");
+    if (!demo && file.size > maxBytes) return setProblem("size");
     setProblem(null);
     void upload.start(file);
   }

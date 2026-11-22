@@ -111,6 +111,13 @@ describe("Vercel: every main feature works when requests alternate between two s
 
     const triage = await send("ai/triage", { token, body: { text: "Do din se pet mein jalan ho rahi hai", age: 40, sex: "female" } });
     ok("triage", triage);
+    const headache = await send("ai/triage", { token, body: { text: "I have a headache", age: 40, sex: "female", language: "en" } });
+    ok("headache triage", headache);
+    const question = (headache.json.follow_up_questions as unknown as Array<{ question: string; options: string[] }>)[0];
+    expect(question).toBeDefined();
+    const answered = await send("ai/triage/answer", { token, body: { session_id: headache.json.session_id, answers: [{ question: question?.question ?? "", answer: question?.options.at(-1) ?? "" }] } });
+    ok("headache follow-up answered on the other copy", answered);
+    expect(answered.json.specialty).toBeDefined();
     const match = await send("match", { token, body: { specialty: triage.json.specialty, urgency: "soon", lat: 18.5, lng: 73.8077, language: "en" } });
     ok("match", match);
     const doctorId = (match.json.items as unknown as Array<{ doctor: { id: string } }>)[0]?.doctor.id ?? "";

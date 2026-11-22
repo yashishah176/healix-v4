@@ -359,7 +359,8 @@
       "privacy": "Aapki report sirf aapko samjhane ke liye istemaal hoti hai. Aap use kabhi bhi hata sakte hain.",
       "failedUnreadable": "Hum yeh file khol nahi paye. Kripya photo, PDF, Word ya text file chunein.",
       "failedNoText": "Hamein padhne layak koi likhawat nahi mili. Saaf, roshni wali photo aksar madad karti hai.",
-      "failedScanned": "Yeh PDF ek scan hai aur padhi nahi ja saki. Kripya pannon ki saaf photo ya screenshot upload karein."
+      "failedScanned": "Yeh PDF ek scan hai aur padhi nahi ja saki. Kripya pannon ki saaf photo ya screenshot upload karein.",
+      "failedNetwork": "Healix tak nahi pahunch paye. Apna internet check karein aur phir koshish karein."
     },
     "review": {
       "title": "Values jaanchein",

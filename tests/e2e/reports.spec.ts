@@ -42,12 +42,25 @@ test.describe("upload (demo step 5)", () => {
     await expect(page.getByTestId("report-file")).toHaveCount(1);
   });
 
-  test("rejects a file type that cannot be read", async ({ page }) => {
+  test("in demo mode any photo is accepted, even an iPhone HEIC photo, and a sample report is read", async ({ page }) => {
     await startDemo(page);
     await openReports(page);
     await page.getByRole("link", { name: "Upload", exact: true }).click();
-    await page.getByTestId("report-file").setInputFiles({ name: "archive.zip", mimeType: "application/zip", buffer: Buffer.from("hello") });
-    await expect(page.getByRole("alert")).toHaveText("Please choose a photo, a PDF, a Word file or a text file.");
+    await page.getByTestId("report-file").setInputFiles({ name: "IMG_2041.HEIC", mimeType: "image/heic", buffer: Buffer.alloc(6 * 1024 * 1024, 1) });
+    await expect(page.getByRole("heading", { name: "Check the values" })).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("an expired sign-in sends the person back to sign in instead of failing quietly", async ({ page }) => {
+    await startDemo(page);
+    await page.evaluate(() => {
+      const raw = sessionStorage.getItem("healix.session");
+      if (!raw) throw new Error("no session");
+      const saved = JSON.parse(raw) as { state: { accessToken: string } };
+      saved.state.accessToken = "mock.someone_who_does_not_exist";
+      sessionStorage.setItem("healix.session", JSON.stringify(saved));
+    });
+    await page.goto("/app/reports?fast=1");
+    await expect(page).toHaveURL(/\/app\/welcome/, { timeout: 15_000 });
   });
 
   test("reads the report with calm progress and lands on the review step", async ({ page }) => {

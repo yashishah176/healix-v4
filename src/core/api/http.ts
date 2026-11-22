@@ -46,6 +46,7 @@ export async function requestJson<Schema extends z.ZodType>(
   const payload: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
+    if (response.status === 401 && token && !path.startsWith("/auth/")) apiConfig.onUnauthorized();
     const parsedError = apiErrorBodySchema.safeParse(payload);
     if (parsedError.success) {
       const { code, message, retry } = parsedError.data.error;

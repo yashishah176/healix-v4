@@ -83,6 +83,7 @@ export interface WorldSnapshot {
   engine: EngineSnapshot;
   reports: ReportStoreSnapshot;
   community?: CommunitySnapshot;
+  triageSessions?: TriageSession[];
 }
 
 const defaultStaff: StaffAccount[] = [{ phone: "9000000001", hospitalId: "hosp_karve", name: "Front desk, Karve Road" }];
@@ -182,6 +183,7 @@ export class MockWorld {
       engine: this.engine.snapshot(),
       reports: this.reports.snapshot(),
       community: this.community.snapshot(),
+      triageSessions: [...this.triageSessions.values()].slice(-200),
     };
   }
 
@@ -213,6 +215,8 @@ export class MockWorld {
     this.engine.restore(snapshot.engine);
     this.reports.restore(snapshot.reports);
     if (snapshot.community) this.community.restore(snapshot.community);
+    this.triageSessions.clear();
+    for (const session of snapshot.triageSessions ?? []) this.triageSessions.set(session.id, session);
   }
 
   private indexProfiles(patient: SeedPatient): void {

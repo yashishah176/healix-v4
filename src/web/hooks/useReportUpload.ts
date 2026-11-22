@@ -32,7 +32,7 @@ export function useReportUpload(profileId: string | undefined) {
       try {
         const { fetchMeta } = await import("@core/api/meta");
         const mode = await fetchMeta().then((meta) => meta.data_mode).catch(() => null);
-        const sent = mode === "mock" ? new File(["demo"], file.name, { type: file.type }) : file;
+        const sent = mode === "mock" ? new File(["demo"], "report.jpg", { type: "image/jpeg" }) : file;
         const created = await reports.upload(profileId, sent);
         const job = await ai.processReport(created.report_id);
         for (let attempt = 0; attempt < maxPolls; attempt += 1) {
@@ -50,7 +50,8 @@ export function useReportUpload(profileId: string | undefined) {
         throw new Error("job_timeout");
       } catch (cause) {
         if (cancelled.current) return;
-        setReason(cause instanceof Error ? cause.message : null);
+        const { ApiError } = await import("@core/api/error");
+        setReason(cause instanceof ApiError ? cause.code : cause instanceof Error ? cause.message : null);
         setPhase("failed");
       }
     },

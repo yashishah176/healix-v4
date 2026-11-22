@@ -383,7 +383,8 @@
       "privacy": "Your report is used only to explain it to you. You can remove it any time.",
       "failedUnreadable": "We could not open this file. Please choose a photo, a PDF, a Word file or a text file.",
       "failedNoText": "We could not find any readable text. A clearer, well-lit photo usually helps.",
-      "failedScanned": "This PDF is a scan and could not be read. Please upload a clear photo or screenshot of the pages instead."
+      "failedScanned": "This PDF is a scan and could not be read. Please upload a clear photo or screenshot of the pages instead.",
+      "failedNetwork": "We could not reach Healix. Check your internet connection and try again."
     },
     "review": {
       "title": "Check the values",

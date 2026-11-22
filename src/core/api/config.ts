@@ -1,11 +1,13 @@
 export interface ApiConfig {
   getToken: () => string | undefined;
   isFastDemo: () => boolean;
+  onUnauthorized: () => void;
 }
 
 export const apiConfig: ApiConfig = {
   getToken: () => undefined,
   isFastDemo: () => false,
+  onUnauthorized: () => undefined,
 };
 
 export function configureApi(overrides: Partial<ApiConfig>): void {

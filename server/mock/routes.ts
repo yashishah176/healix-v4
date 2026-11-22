@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono, type Context } from "hono";
@@ -474,7 +475,7 @@ export function createMockApi({ world, simulator, latency, onReset, rag, limiter
     requireUser(context);
     const request = await body(context, triageRequestSchema);
     await wait(context, between(latency.triageMs));
-    const outcome = runTriage(request, requestId("sess"));
+    const outcome = runTriage(request, `${requestId("sess")}_${randomUUID().slice(0, 8)}`);
     world.triageSessions.set(outcome.session.id, outcome.session);
     return context.json({ ...outcome.response, request_id: requestId("req"), model: "mock-rule-engine", prompt_version: "mock-v1" });
   });

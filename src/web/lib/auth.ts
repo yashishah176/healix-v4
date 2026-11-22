@@ -10,6 +10,13 @@ export function wireApi(): void {
   configureApi({
     getToken: () => sessionStore.getState().accessToken ?? undefined,
     isFastDemo: () => preferencesStore.getState().fastDemo,
+    onUnauthorized: () => {
+      const state = sessionStore.getState();
+      if (!state.accessToken) return;
+      const staff = state.role === "staff";
+      state.signOut();
+      if (typeof window !== "undefined") window.location.assign(staff ? "/hospital/login" : "/app/welcome");
+    },
   });
 }
 
