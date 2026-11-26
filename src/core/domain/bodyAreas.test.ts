@@ -23,8 +23,9 @@ describe("body areas", () => {
 
   it("appends the chosen areas and pain strength, and works with no typed text", () => {
     expect(composeSymptomText({ text: "burning", areaLabels: ["Stomach", "Chest"], painLevel: 3, areaTemplate, painTemplate })).toBe(
-      "burning Pain area: Stomach, Chest. Pain strength: 3 out of 5.",
+      "burning. Pain area: Stomach, Chest. Pain strength: 3 out of 5.",
     );
     expect(composeSymptomText({ text: "", areaLabels: ["Head"], painLevel: null, areaTemplate, painTemplate })).toBe("Pain area: Head.");
+    expect(composeSymptomText({ text: "pet mein jalan hai।", areaLabels: ["Stomach"], painLevel: null, areaTemplate, painTemplate })).toBe("pet mein jalan hai। Pain area: Stomach.");
   });
 });

@@ -29,7 +29,8 @@ export function toggleArea(selected: readonly BodyArea[], area: BodyArea): BodyA
 export function composeSymptomText(parts: { text: string; areaLabels: string[]; painLevel: PainLevel | null; areaTemplate: (areas: string) => string; painTemplate: (level: number) => string }): string {
   const pieces: string[] = [];
   const typed = parts.text.trim();
-  if (typed.length > 0) pieces.push(typed);
+  const extra = parts.areaLabels.length > 0 || parts.painLevel !== null;
+  if (typed.length > 0) pieces.push(extra && !/[.!?।]$/.test(typed) ? `${typed}.` : typed);
   if (parts.areaLabels.length > 0) pieces.push(parts.areaTemplate(parts.areaLabels.join(", ")));
   if (parts.painLevel !== null) pieces.push(parts.painTemplate(parts.painLevel));
   return pieces.join(" ");
