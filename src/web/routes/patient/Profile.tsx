@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { backend } from "@core/api/backend";
 import { formatIndiaTime } from "@core/domain/format";
+import { isLanguageCode, languages } from "@core/i18n/languages";
 import { activeProfile } from "@core/store/session";
 import { Button } from "../../components/base/Button";
 import { Card } from "../../components/base/Card";
@@ -58,7 +59,7 @@ export default function ProfilePage() {
           <h2 className="type-h3">{currentProfile.name}</h2>
           <p className="type-body">{t("profilePage.ageAndSex", { age: currentProfile.age, sex: sexLabel })}</p>
           <p className="type-small">{t("profilePage.conditions", { conditions })}</p>
-          <p className="type-small">{t("profilePage.language", { language: currentProfile.language.toUpperCase() })}</p>
+          <p className="type-small">{t("profilePage.language", { language: isLanguageCode(currentProfile.language) ? languages[currentProfile.language].nativeLabel : currentProfile.language })}</p>
         </Card>
       )}
       {saved ? <p role="status" className="type-small font-medium text-accent-soft-text">{t("profileForm.saved")}</p> : null}

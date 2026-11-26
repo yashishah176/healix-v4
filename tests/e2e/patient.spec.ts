@@ -344,6 +344,13 @@ test.describe("triage inputs", () => {
     await page.getByRole("button", { name: "Send", exact: true }).click();
     await expect(page.locator('[data-urgency]')).toBeVisible({ timeout: 5000 });
     expect(sentText).toBe("Pain area: Stomach. Pain strength: 3 out of 5.");
+
+    await page.getByRole("button", { name: "Start over" }).click();
+    await expect(page.getByRole("textbox", { name: "Describe your symptoms" })).toHaveValue("");
+    await page.getByRole("textbox", { name: "Describe your symptoms" }).fill("Knee pain when climbing stairs for 2 weeks");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page.locator('[data-urgency]')).toBeVisible({ timeout: 5000 });
+    expect(sentText).toBe("Knee pain when climbing stairs for 2 weeks");
   });
 
   test("a failure shows a calm message with a way to retry", async ({ page }) => {

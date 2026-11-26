@@ -65,6 +65,15 @@ export default function Triage() {
     });
   }
 
+  function startOver() {
+    flow.reset();
+    setText("");
+    setAreas([]);
+    setPain(null);
+    setHeard(null);
+    setSpokenLanguage(null);
+  }
+
   const { state } = flow;
 
   if (state.stage === "emergency" && state.result) {
@@ -199,7 +208,7 @@ export default function Triage() {
                 <Button to={`/app/doctors?specialty=${encodeURIComponent(state.result.specialty)}&urgency=${state.result.urgency}`} className="w-full">
                   {t("triage.showDoctors")}
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={flow.reset}>
+                <Button variant="ghost" className="w-full" onClick={startOver}>
                   {t("triage.startOver")}
                 </Button>
               </div>
@@ -212,7 +221,7 @@ export default function Triage() {
               <p className="type-small">{t("errors.generic")}</p>
               <div className="flex gap-3">
                 {state.canRetry ? <Button onClick={() => void flow.retry()}>{t("common.tryAgain")}</Button> : null}
-                <Button variant="secondary" onClick={flow.reset}>
+                <Button variant="secondary" onClick={startOver}>
                   {t("triage.startOver")}
                 </Button>
               </div>

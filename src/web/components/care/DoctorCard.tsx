@@ -89,11 +89,11 @@ export function DoctorCard({ item, language, isTop, onBookTop, bookingQuery }: D
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {isTop && onBookTop ? (
-          <Button className="flex-1" onClick={onBookTop}>
+          <Button className="sm:flex-1" onClick={onBookTop}>
             {t("doctors.bookTop")}
           </Button>
         ) : null}
-        <Button to={`/app/doctors/${doctor.id}${bookingQuery ? `?${bookingQuery}` : ""}`} variant="secondary" className="flex-1">
+        <Button to={`/app/doctors/${doctor.id}${bookingQuery ? `?${bookingQuery}` : ""}`} variant="secondary" className="sm:flex-1">
           {t("doctors.seeTimes")}
         </Button>
       </div>
