@@ -88,6 +88,16 @@ describe("report jargon", () => {
     expect(text).toContain("The rest are within the usual range.");
   });
 
+  it("calls a value far below its range low, never high", () => {
+    const vitaminD: AssistantObservation = { code: "VITD", display: "Vitamin D", value: 8.98, unit: "ng/mL", reference: { low: 30, high: 100 }, interpretation: "critical" };
+    const summary = answerFor("Explain my report in simple words", "en", [vitaminD]);
+    expect(summary.type === "answer" ? summary.text : "").toContain("Vitamin D: 8.98 ng/mL, below the usual range.");
+    const asked = answerFor("is my vitamin d low", "en", [vitaminD]);
+    const text = asked.type === "answer" ? asked.text : "";
+    expect(text).toContain("below the usual range");
+    expect(text).not.toContain("above the usual range");
+  });
+
   it("says when every value is in range, and when there is no confirmed report", () => {
     expect(answerFor("explain my report", "en", [tg])).toMatchObject({ type: "answer", text: expect.stringContaining("All 1 values") });
     expect(answerFor("explain my report", "en", [])).toMatchObject({ type: "answer", text: expect.stringContaining("could not find a confirmed report") });

@@ -103,11 +103,20 @@ async function* words(text: string, options: RagOptions): AsyncGenerator<Assista
   }
 }
 
+const valueLineStart = /\b[A-Z][A-Za-z0-9 ()%./-]{0,40}:\s*-?\d/;
+
+export function fromFirstValue(line: string): string {
+  const trimmed = line.trim();
+  if (/^[A-Z][A-Za-z0-9 ()%./-]{0,40}:\s*-?\d/.test(trimmed)) return trimmed;
+  const at = trimmed.search(valueLineStart);
+  return at > 0 ? trimmed.slice(at) : trimmed;
+}
+
 function fromReport(hits: readonly SearchHit[], language: LanguageCode, question: string): string {
   if (hits.length === 0) return noReportMessage[language];
   const asked = new Set(tokenize(question));
   const candidates = hits
-    .flatMap((hit, hitIndex) => hit.chunk.text.split("\n").map((line, lineIndex) => ({ line, position: hitIndex * 1000 + lineIndex })))
+    .flatMap((hit, hitIndex) => hit.chunk.text.split("\n").map((line, lineIndex) => ({ line: lineIndex === 0 ? fromFirstValue(line) : line, position: hitIndex * 1000 + lineIndex })))
     .map(({ line, position }) => ({ line: line.trim(), position, hits: tokenize(line).filter((token) => asked.has(token)).length + (/:\s*\d/.test(line) ? 2 : 0) }))
     .filter((entry) => entry.line.length > 0 && !entry.line.endsWith(":") && !/^[a-z]/.test(entry.line))
     .filter((entry, index, all) => all.findIndex((other) => other.line === entry.line) === index);

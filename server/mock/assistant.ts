@@ -17,7 +17,7 @@ import {
   type GlossaryAnalyte,
   type GlossaryTerm,
 } from "./glossary";
-import { genericMeaning } from "./genericExplain";
+import { genericMeaning, sideOf } from "./genericExplain";
 import { detectLanguage } from "./triage";
 
 type Localized = Record<LanguageCode, string>;
@@ -75,8 +75,9 @@ function rangeText(reference: { low: number | null; high: number | null }, unit:
 }
 
 function whereOf(observation: AssistantObservation, language: LanguageCode): string {
-  if (observation.interpretation === "normal") return mine.within[language];
-  return observation.interpretation === "low" ? mine.below[language] : mine.above[language];
+  const side = sideOf(observation);
+  if (side === "normal") return mine.within[language];
+  return side === "low" ? mine.below[language] : mine.above[language];
 }
 
 function personal(observation: AssistantObservation | undefined, language: LanguageCode): string {
@@ -118,7 +119,7 @@ export function answerFor(message: string, language: LanguageCode, observations:
         const observation = observations.find((candidate) => candidate.code === entry.code);
         const extra =
           observation && observation.interpretation !== "normal"
-            ? genericMeaning(entry.display, observation.interpretation === "low" ? "low" : "high", language)
+            ? genericMeaning(entry.display, sideOf(observation) === "low" ? "low" : "high", language)
             : "";
         return [entry.what[language], personal(observation, language), extra].filter(Boolean).join(" ");
       });

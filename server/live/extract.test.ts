@@ -64,6 +64,44 @@ describe("extractFromPages", () => {
     expect(result.reportType).toBe("Lipid profile");
   });
 
+  it("reads a full-body report the way the lab prints it", () => {
+    const result = extractFromPages(
+      [
+        page(
+          line(["Platelet", 50], ["Count", 120], ["150000", 260], ["/cmm", 330], ["150000", 420], ["-", 480], ["410000", 500]),
+          line(["Cholesterol", 50], ["189.0", 260], ["mg/dL", 330], ["Desirable", 420], [":", 480], ["<200", 500]),
+          line(["HDL", 50], ["Cholesterol", 100], ["60.0", 260], ["mg/dL", 330], ["Low:", 420], ["<40.0", 480]),
+          line(["25(OH)", 50], ["Vitamin", 100], ["D", 160], ["8.98", 260], ["ng/mL", 330], ["Deficiency", 420], [":", 480], ["<10", 500]),
+          line(["Approved", 50], ["on", 110], [":", 140], ["20-Feb-2023", 160]),
+          line(["Sex/Age", 50], [":", 110], ["Male", 140], ["01-Feb-1982", 300]),
+        ),
+        page(line(["CHOL/HDL", 50], ["Ratio", 120], ["3.1", 260]), line(["LDL/HDL", 50], ["Ratio", 120], ["1.7", 260])),
+      ],
+      NOW,
+    );
+    const byCode = Object.fromEntries(result.observations.map((entry) => [entry.code, entry]));
+    expect(byCode.PLT).toMatchObject({ value: 150, reference: { low: 150, high: 410 }, interpretation: "normal" });
+    expect(byCode.TC).toMatchObject({ value: 189, interpretation: "normal" });
+    expect(byCode.HDL).toMatchObject({ value: 60, interpretation: "normal" });
+    expect(byCode.VITD).toMatchObject({ value: 8.98, reference: { low: 30, high: 100 } });
+    expect(byCode.VITD?.interpretation).not.toBe("normal");
+    expect(byCode.LDL).toBeUndefined();
+    expect(result.issuedAtMs).toBe(Date.UTC(2023, 1, 20, 6, 30));
+  });
+
+  it("does not take a patient or doctor line for the lab name", () => {
+    const result = extractFromPages([page(line(["Scan", 50], ["QR", 100], ["code", 150]), line([":", 50], ["Asha", 100], ["Rao", 150], ["Lab", 200], ["Id", 240], [":", 270], ["0223", 300]), line(["M.D.", 50], ["Pathology", 100]))], NOW);
+    expect(result.labName).toBe("Uploaded report");
+  });
+
+  it("calls a report with many kinds of tests a full body check-up", () => {
+    const result = extractFromPages(
+      [page(line(["HbA1c", 50], ["7.1", 200], ["%", 260]), line(["Triglycerides", 50], ["168", 200]), line(["TSH", 50], ["0.82", 200]), line(["Creatinine", 50], ["0.83", 200]))],
+      NOW,
+    );
+    expect(result.reportType).toBe("Full body check-up");
+  });
+
   it("returns nothing for a page with no known tests", () => {
     expect(extractFromPages([page(line(["Hello", 50], ["world", 120]))], NOW).observations).toEqual([]);
   });
@@ -76,6 +114,7 @@ describe("report dates", () => {
     expect(findReportDate("Date 12/09/2031", NOW)).toBeNull();
     expect(findReportDate("Date 12/09/2001", NOW)).toBeNull();
     expect(findReportDate("no date here", NOW)).toBeNull();
+    expect(findReportDate("Born 01-Feb-1982, collected 20-Feb-2023, printed 28-Feb-2023", NOW)).toBe(Date.UTC(2023, 1, 28, 6, 30));
   });
 });
 

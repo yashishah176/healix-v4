@@ -81,7 +81,7 @@ export default function Assistant() {
             />
           ),
         )}
-        <div ref={end} />
+        <div ref={end} className="scroll-mb-48" />
       </div>
 
       <form onSubmit={submit} className="sticky bottom-20 flex flex-col gap-2 bg-bg pt-2">

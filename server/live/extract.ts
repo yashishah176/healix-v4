@@ -63,8 +63,24 @@ interface ParsedRange {
   high: number | null;
 }
 
+const abnormalBand = /deficien|insufficien|toxic|borderline|\bpoor\b|\blow\s*:|\bhigh\s*:|diabet/i;
+
+function scaledValue(text: string, analyte: Analyte): { value: number; repaired: boolean } | null {
+  if (!analyte.scale) return null;
+  const raw = parseNumber(cleanNumber(text).replace(/^[<>≤≥]/, ""));
+  if (raw === null || raw < analyte.scale.above) return null;
+  const value = Math.round((raw / analyte.scale.divideBy) * 100) / 100;
+  return value >= analyte.plausible[0] && value <= analyte.plausible[1] ? { value, repaired: false } : null;
+}
+
 function parseRange(texts: readonly string[], analyte: Analyte): ParsedRange | null {
-  const joined = texts.join(" ").replace(/[–—]/g, "-");
+  const joined = texts
+    .join(" ")
+    .replace(/[–—]/g, "-")
+    .replace(/\d+(?:[.,]\d+)?/g, (number) => {
+      const scaled = scaledValue(number, analyte);
+      return scaled ? String(scaled.value) : number;
+    });
   const span = joined.match(/(\d+(?:[.,]\d+)?)\s*(?:-|to)\s*(\d+(?:[.,]\d+)?)/i);
   const wide: [number, number] = [0, analyte.plausible[1] * 1.5];
   if (span?.[1] && span[2]) {
@@ -117,13 +133,12 @@ function parseLine(line: ReaderLine, page: ReaderPage): Observation | null {
   const valueWord = after[valueIndex];
   if (!valueWord) return null;
 
-  const parsed = repairDecimal(valueWord.text, matched.plausible) ?? (matched.scale ? repairDecimal(String(Number(cleanNumber(valueWord.text)) / matched.scale.divideBy), matched.plausible) : null);
+  const parsed = scaledValue(valueWord.text, matched) ?? repairDecimal(valueWord.text, matched.plausible);
   if (!parsed) return null;
   let value = parsed.value;
-  if (matched.scale && value >= matched.scale.above) value = Math.round((value / matched.scale.divideBy) * 100) / 100;
 
   const rest = after.slice(valueIndex + 1).map((word) => word.text);
-  const range = parseRange(rest.filter((word) => !/^[HL*]$/i.test(word)), matched);
+  const range = abnormalBand.test(rest.join(" ")) ? null : parseRange(rest.filter((word) => !/^[HL*]$/i.test(word)), matched);
   const fromReport = range !== null;
   const reference = range ?? matched.defaultRange ?? { low: null, high: null };
 
@@ -161,26 +176,18 @@ function parseLine(line: ReaderLine, page: ReaderPage): Observation | null {
 const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
 export function findReportDate(text: string, nowMs: number): number | null {
-  const numeric = text.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})\b/);
-  const named = text.match(/\b(\d{1,2})[\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s,-]+(\d{4})\b/i);
-  let day: number;
-  let month: number;
-  let year: number;
-  if (numeric?.[1] && numeric[2] && numeric[3]) {
-    day = Number(numeric[1]);
-    month = Number(numeric[2]) - 1;
-    year = Number(numeric[3]);
-  } else if (named?.[1] && named[2] && named[3]) {
-    day = Number(named[1]);
-    month = monthNames.indexOf(named[2].toLowerCase());
-    year = Number(named[3]);
-  } else {
-    return null;
+  const found: number[] = [];
+  for (const match of text.matchAll(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})\b/g)) found.push(dateAt(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  for (const match of text.matchAll(/\b(\d{1,2})[\s-]+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s,-]+(\d{4})\b/gi)) {
+    found.push(dateAt(Number(match[1]), monthNames.indexOf((match[2] ?? "").toLowerCase()), Number(match[3])));
   }
-  if (month < 0 || month > 11 || day < 1 || day > 31) return null;
-  const at = Date.UTC(year, month, day, 6, 30);
-  if (at > nowMs + 86_400_000 || at < nowMs - 3 * 365 * 86_400_000) return null;
-  return at;
+  const plausible = found.filter((at) => Number.isFinite(at) && at <= nowMs + 86_400_000 && at >= nowMs - 10 * 365 * 86_400_000);
+  return plausible.length > 0 ? Math.max(...plausible) : null;
+}
+
+function dateAt(day: number, month: number, year: number): number {
+  if (month < 0 || month > 11 || day < 1 || day > 31) return Number.NaN;
+  return Date.UTC(year, month, day, 6, 30);
 }
 
 const headings: Array<[RegExp, string]> = [
@@ -219,7 +226,9 @@ export function extractFromPages(pages: readonly ReaderPage[], nowMs: number): E
   const observations = [...found.values()];
   const firstPage = pages[0];
   const allText = pages.flatMap((page) => page.lines.map((line) => line.words.map((word) => word.text).join(" "))).join("\n");
-  const labLine = firstPage?.lines.map((line) => line.words.map((word) => word.text).join(" ").trim()).find((text) => /[A-Za-z]{4,}/.test(text) && !/^(patient|name|age|sex|date)/i.test(text));
+  const firstLines = firstPage?.lines.map((line) => line.words.map((word) => word.text).join(" ").trim()) ?? [];
+  const usable = firstLines.filter((text) => /[A-Za-z]{4,}/.test(text) && !/^(patient|name|age|sex|date)/i.test(text) && !text.includes(":") && !/scan\s+qr|test\s+report|\breport\b|national\s+reference|information|address|email|website|phone|\bm\.?d\b|\bdr\.?\s/i.test(text));
+  const labLine = usable.find((text) => /\b(patholog\w*|diagnostics?|laborator(?:y|ies)|labs?|hospital|clinic|healthcare)\b/i.test(text) && text.length <= 60) ?? firstLines.slice(0, 3).find((text) => usable.includes(text) && text.length <= 40 && !/\d/.test(text));
   return {
     labName: (labLine ?? "Uploaded report").slice(0, 80),
     reportType: headingTitle(pages) ?? reportTypeFor(observations.map((entry) => entry.code)),

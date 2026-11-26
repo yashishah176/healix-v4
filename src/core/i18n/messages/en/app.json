@@ -389,7 +389,8 @@
     "review": {
       "title": "Check the values",
       "body": "Healix read these values from your report. Fix anything that looks wrong before it is explained.",
-      "checkCount": "{{count}} value to check",
+      "checkCount": "{{count}} values to check",
+      "checkCount_one": "1 value to check",
       "original": "Your report",
       "extracted": "Values read",
       "pleaseCheck": "Please check",
@@ -583,9 +584,11 @@
     "loading": "Loading the community…",
     "error": "We could not load the community right now.",
     "comments": "{{count}} replies",
+    "comments_one": "1 reply",
     "upvote": "Upvote",
     "downvote": "Downvote",
     "score": "{{count}} points",
+    "score_one": "1 point",
     "by": "by {{alias}}",
     "you": "you",
     "ago": {

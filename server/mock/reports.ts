@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import type { DiagnosticReport, ExplainResponse, Observation, ReportListItem } from "@core/api/schemas/ai";
 import type { LanguageCode } from "@core/i18n/languages";
 import type { MockClock } from "./clock";
-import { genericMeaning, genericQuestions, genericSummary } from "./genericExplain";
+import { genericMeaning, genericQuestions, genericSummary, sideOf } from "./genericExplain";
 
 type Localized = Record<LanguageCode, string>;
 type Interpretation = Observation["interpretation"];
@@ -164,9 +164,6 @@ function loadBoxes(): BoxMap {
   return JSON.parse(readFileSync(path, "utf8")) as BoxMap;
 }
 
-const directionOf = (interpretation: Interpretation): "low" | "normal" | "high" =>
-  interpretation === "normal" ? "normal" : interpretation === "low" ? "low" : "high";
-
 const normalMeaning: Localized = {
   en: "This value is within the usual range.",
   hi: "यह मान सामान्य सीमा के भीतर है।",
@@ -306,7 +303,8 @@ function documentText(record: ReportRecord): string {
   const lines = record.observations.map((entry) => {
     const { low, high } = entry.reference;
     const range = low !== null && low > 0 && high !== null ? `${low} to ${high}` : high !== null ? `up to ${high}` : low !== null ? `from ${low}` : "not given";
-    const where = entry.interpretation === "normal" ? "within the reference range" : entry.interpretation === "low" ? "below the reference range" : "above the reference range";
+    const side = sideOf(entry);
+    const where = side === "normal" ? "within the reference range" : side === "low" ? "below the reference range" : "above the reference range";
     const meaning = glossaryAnalytes.find((item) => item.code === entry.code)?.what.en;
     return `${entry.display}: ${entry.value} ${entry.unit}, reference ${range} ${entry.unit}, ${where}.${meaning ? ` ${meaning}` : ""}`;
   });
@@ -581,7 +579,7 @@ export class ReportStore {
     if (record.status !== "confirmed") return "review_required";
 
     const items = record.observations.map((entry) => {
-      const direction = directionOf(entry.interpretation);
+      const direction = sideOf(entry);
       const text = direction === "normal" ? undefined : (meanings[entry.code]?.[direction]?.[language] ?? genericMeaning(entry.display, direction, language));
       const bound = direction === "high" ? entry.reference.high : entry.reference.low;
       const span = (entry.reference.high ?? entry.value) - (entry.reference.low ?? 0) || 1;

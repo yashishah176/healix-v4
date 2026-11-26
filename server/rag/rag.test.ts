@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ragAnswer, isSafeAnswer, type RagOptions } from "./assistant";
+import { fromFirstValue, ragAnswer, isSafeAnswer, type RagOptions } from "./assistant";
 import { recursiveChunk } from "./chunker";
 import { cosine, embed } from "./embedder";
 import { GroqError, streamGroq, type GroqConfig, type GroqTransport } from "./groq";
@@ -251,6 +251,12 @@ describe("report assistant", () => {
       expect(isSafeAnswer(text)).toBe(true);
       expect(text).not.toContain("500 mg");
     }
+  });
+
+  it("starts a quote at a whole report line, not at the end of the previous sentence", () => {
+    expect(fromFirstValue("They rise after sugary or fatty food and with extra weight. HDL cholesterol: 60 mg/dL, within the reference range.")).toBe("HDL cholesterol: 60 mg/dL, within the reference range.");
+    expect(fromFirstValue("LDL cholesterol: 100.39 mg/dL, above the reference range.")).toBe("LDL cholesterol: 100.39 mg/dL, above the reference range.");
+    expect(fromFirstValue("Lipid profile from City Lab.")).toBe("Lipid profile from City Lab.");
   });
 
   it("works without any Groq key, quoting the report for terms it has no glossary entry for", async () => {

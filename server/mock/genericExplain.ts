@@ -3,6 +3,11 @@ import type { LanguageCode } from "@core/i18n/languages";
 
 type Direction = "high" | "low";
 
+export function sideOf(entry: Pick<Observation, "interpretation" | "value" | "reference">): "low" | "normal" | "high" {
+  if (entry.interpretation === "normal" || entry.interpretation === "low" || entry.interpretation === "high") return entry.interpretation;
+  return entry.reference.low !== null && entry.value < entry.reference.low ? "low" : "high";
+}
+
 const meaning: Record<LanguageCode, Record<Direction, (name: string) => string>> = {
   en: {
     high: (name) => `${name} is above the usual range. Food, activity, sleep and other conditions can all affect it, so your doctor reads it together with your other results.`,
